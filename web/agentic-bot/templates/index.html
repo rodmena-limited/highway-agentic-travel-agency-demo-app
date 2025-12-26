@@ -6,257 +6,354 @@
     <title>Highway Travel Services</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f9fc;
+            --bg-tertiary: #eef2f7;
+            --bg-hover: #e8ecf2;
+            --border: #e1e5eb;
+            --border-light: #d0d5dd;
+            --text-primary: #1a1f36;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --accent: #0066cc;
+            --accent-hover: #0052a3;
+            --accent-light: #e6f0fa;
+            --success: #0f9d58;
+            --success-bg: #e6f4ec;
+            --warning: #f5a623;
+            --warning-bg: #fef6e6;
+            --error: #d93025;
+            --error-bg: #fce8e6;
+        }
+
         body {
-            font-family: 'JetBrains Mono', monospace;
-            background: #0a0a0b;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-secondary);
             min-height: 100vh;
-            color: #e4e4e7;
-            font-size: 13px;
-            line-height: 1.6;
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px;
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 24px;
-            min-height: 100vh;
+        .app-container {
+            display: flex;
+            height: 100vh;
         }
 
-        /* Chat Panel */
-        .chat-panel {
+        /* Main Chat Area */
+        .main-content {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            background: #111113;
-            border-radius: 8px;
-            border: 1px solid #27272a;
-            overflow: hidden;
+            background: var(--bg-primary);
         }
 
-        .chat-header {
-            background: #18181b;
-            padding: 20px 24px;
+        .header {
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #27272a;
+            background: var(--bg-primary);
         }
 
-        .chat-header h1 {
-            font-size: 14px;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+        }
+
+        .header-title h1 {
+            font-size: 18px;
             font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #fafafa;
+            color: var(--text-primary);
         }
 
-        .badge {
-            background: #27272a;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 10px;
+        .header-title span {
+            font-size: 12px;
+            color: var(--text-muted);
             font-weight: 500;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #71717a;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .location-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--accent-light);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .location-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Messages Area */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            background: var(--bg-secondary);
         }
 
         .messages {
-            flex: 1;
-            padding: 24px;
-            overflow-y: auto;
+            max-width: 800px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
         .message {
-            max-width: 85%;
-            padding: 16px 20px;
-            border-radius: 4px;
-            line-height: 1.7;
-            font-weight: 400;
-            animation: fadeIn 0.2s ease;
+            display: flex;
+            gap: 14px;
+            animation: slideIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .message.user {
-            align-self: flex-end;
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            color: #fafafa;
-        }
-
-        .message.assistant {
-            align-self: flex-start;
-            background: #18181b;
-            border: 1px solid #27272a;
-            color: #a1a1aa;
-        }
-
-        .message.system {
-            align-self: center;
-            background: #1c1917;
-            border: 1px solid #292524;
-            font-size: 12px;
-            text-align: center;
-            color: #a8a29e;
-        }
-
-        .message.error {
-            background: #1c1917;
-            border: 1px solid #7f1d1d;
-            color: #fca5a5;
-        }
-
-        /* Typing indicator */
-        .typing-indicator {
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 16px 20px;
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 4px;
-            max-width: 200px;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .message.assistant .message-avatar {
+            background: var(--accent);
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .message.system .message-avatar {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .message-content {
+            flex: 1;
+            padding: 14px 18px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            border-top-left-radius: 4px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .message.user .message-content {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            border-radius: 12px;
+            border-top-right-radius: 4px;
+        }
+
+        .message.system .message-content {
+            background: var(--warning-bg);
+            border-color: var(--warning);
+            color: var(--warning);
+            text-align: center;
+        }
+
+        .message.error .message-content {
+            background: var(--error-bg);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 14px;
         }
 
         .typing-dots {
             display: flex;
-            gap: 4px;
+            align-items: center;
+            gap: 5px;
+            padding: 18px 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
         .typing-dots span {
-            width: 6px;
-            height: 6px;
-            background: #52525b;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
             border-radius: 50%;
-            animation: typingPulse 1.4s infinite;
+            animation: bounce 1.4s infinite;
         }
 
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-        @keyframes typingPulse {
-            0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
-            30% { opacity: 1; transform: scale(1.2); }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
         }
 
-        .typing-text {
-            font-size: 11px;
-            color: #71717a;
-            font-weight: 500;
+        /* Input Area */
+        .input-container {
+            padding: 20px 32px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
         }
 
-        .input-area {
-            padding: 20px;
-            background: #18181b;
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
             display: flex;
             gap: 12px;
-            border-top: 1px solid #27272a;
         }
 
-        .input-area input {
+        .input-wrapper input {
             flex: 1;
             padding: 14px 18px;
-            border: 1px solid #27272a;
-            border-radius: 4px;
-            background: #0a0a0b;
-            color: #fafafa;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            font-weight: 400;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .input-area input:focus {
+        .input-wrapper input:focus {
             outline: none;
-            border-color: #3f3f46;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
         }
 
-        .input-area input::placeholder {
-            color: #52525b;
+        .input-wrapper input::placeholder {
+            color: var(--text-muted);
         }
 
-        .input-area button {
-            padding: 14px 24px;
-            border: 1px solid #27272a;
-            border-radius: 4px;
-            background: #fafafa;
-            color: #0a0a0b;
-            font-family: 'JetBrains Mono', monospace;
+        .input-wrapper button {
+            padding: 14px 28px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
             font-weight: 600;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: background 0.2s;
         }
 
-        .input-area button:hover:not(:disabled) {
-            background: #e4e4e7;
+        .input-wrapper button:hover:not(:disabled) {
+            background: var(--accent-hover);
         }
 
-        .input-area button:disabled {
-            opacity: 0.4;
+        .input-wrapper button:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        /* Workflow Panel */
-        .workflow-panel { display: flex; flex-direction: column; gap: 16px; }
-
-        .card {
-            background: #111113;
-            border-radius: 8px;
-            border: 1px solid #27272a;
-            overflow: hidden;
+        /* Sidebar */
+        .sidebar {
+            width: 360px;
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
 
-        .card-header {
-            background: #18181b;
-            padding: 16px 18px;
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+            flex: 1;
+        }
+
+        .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-weight: 600;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #71717a;
-            border-bottom: 1px solid #27272a;
+            margin-bottom: 16px;
         }
 
-        .status-badge {
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-indicator {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 11px;
+            padding: 5px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--text-secondary);
         }
 
         .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
+            background: var(--text-muted);
         }
 
-        .status-dot.idle { background: #3f3f46; }
-        .status-dot.running { background: #eab308; animation: pulse 1.5s infinite; }
-        .status-dot.waiting { background: #a855f7; animation: pulse 2s infinite; }
-        .status-dot.completed { background: #22c55e; }
-        .status-dot.rejected { background: #f97316; }
-        .status-dot.failed { background: #ef4444; }
+        .status-dot.running { background: var(--warning); animation: pulse 1.5s infinite; }
+        .status-dot.waiting { background: var(--accent); animation: pulse 2s infinite; }
+        .status-dot.completed { background: var(--success); }
+        .status-dot.failed { background: var(--error); }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -264,300 +361,323 @@
         }
 
         /* Steps */
-        .steps-list { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
 
         .step {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px 14px;
-            border-radius: 4px;
-            background: transparent;
-            border: 1px solid transparent;
-            transition: all 0.15s;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.2s;
         }
 
         .step.active {
-            background: #18181b;
-            border-color: #3f3f46;
+            background: var(--accent-light);
+            border-color: var(--accent);
         }
 
         .step.completed {
-            opacity: 0.6;
+            opacity: 0.7;
         }
 
         .step.waiting {
-            background: #1a1523;
-            border-color: #2e1065;
+            background: var(--warning-bg);
+            border-color: var(--warning);
         }
 
-        .step.skipped {
-            opacity: 0.3;
-        }
-
-        .step-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
+        .step-number {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
             font-weight: 600;
-            background: #27272a;
-            color: #71717a;
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
         }
 
-        .step.active .step-icon { background: #3f3f46; color: #fafafa; }
-        .step.completed .step-icon { background: #14532d; color: #22c55e; }
-        .step.waiting .step-icon { background: #2e1065; color: #a855f7; }
-
-        .step-info { flex: 1; }
-        .step-name { font-weight: 500; font-size: 12px; color: #a1a1aa; }
-        .step-desc { font-size: 10px; color: #52525b; margin-top: 2px; }
-        .step-time { font-size: 10px; color: #3f3f46; font-weight: 500; }
-
-        /* Spinner for active step */
-        .step.active .step-icon::after {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            border: 2px solid transparent;
-            border-top-color: #fafafa;
-            border-radius: 4px;
-            animation: stepSpin 1s linear infinite;
+        .step.active .step-number {
+            background: var(--accent);
+            color: white;
         }
 
-        @keyframes stepSpin {
-            to { transform: rotate(360deg); }
+        .step.completed .step-number {
+            background: var(--success-bg);
+            color: var(--success);
         }
 
-        /* Events */
-        .events-list {
-            padding: 12px;
-            max-height: 180px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .step.waiting .step-number {
+            background: var(--warning);
+            color: white;
         }
 
-        .event {
-            padding: 10px 12px;
-            background: #18181b;
-            border-radius: 4px;
+        .step-info {
+            flex: 1;
+        }
+
+        .step-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 1px;
+        }
+
+        .step-desc {
             font-size: 11px;
-            border-left: 2px solid #3f3f46;
+            color: var(--text-muted);
         }
 
-        .event.status { border-color: #a855f7; }
-        .event.error { border-color: #ef4444; background: #1c1917; }
-        .event.approval { border-color: #eab308; }
-        .event.complete { border-color: #22c55e; }
-
-        .event-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .event-type { font-weight: 600; color: #71717a; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
-        .event-time { color: #3f3f46; font-size: 10px; }
-        .event-data { color: #52525b; }
+        .step-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
 
         /* Actions */
         .actions-grid {
-            padding: 12px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
 
         .action-btn {
-            padding: 10px;
-            border: 1px solid #27272a;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            background: #18181b;
-            color: #71717a;
+            transition: all 0.2s;
         }
 
         .action-btn:hover:not(:disabled) {
-            border-color: #3f3f46;
-            color: #a1a1aa;
+            background: var(--bg-tertiary);
+            border-color: var(--border-light);
         }
 
-        .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        .action-btn.cancel { color: #f87171; }
-        .action-btn.cancel:hover:not(:disabled) { border-color: #7f1d1d; }
-
-        /* Inline Approval */
-        .approval-inline {
-            margin-top: 16px;
-            padding: 20px;
-            background: #1a1523;
-            border-radius: 4px;
-            border: 1px solid #2e1065;
-        }
-
-        .approval-inline p {
-            margin-bottom: 16px;
-            font-weight: 500;
-            color: #a1a1aa;
-            font-size: 12px;
-        }
-
-        .approval-inline-buttons {
-            display: flex;
-            gap: 12px;
-        }
-
-        .approval-inline-buttons button {
-            padding: 12px 24px;
-            border: 1px solid;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .approval-inline-buttons button:disabled {
+        .action-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
 
-        .btn-approve-inline {
-            background: #14532d;
-            border-color: #166534;
-            color: #22c55e;
+        .action-btn.danger {
+            color: var(--error);
         }
 
-        .btn-approve-inline:hover:not(:disabled) {
-            background: #166534;
+        /* Events */
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 280px;
+            overflow-y: auto;
         }
 
-        .btn-reject-inline {
-            background: #1c1917;
-            border-color: #292524;
-            color: #a8a29e;
+        .event {
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 3px solid var(--border);
         }
 
-        .btn-reject-inline:hover:not(:disabled) {
-            border-color: #7f1d1d;
-            color: #f87171;
+        .event.step { border-color: var(--accent); }
+        .event.approval { border-color: var(--warning); }
+        .event.complete { border-color: var(--success); }
+        .event.error { border-color: var(--error); }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .event-type {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .event-time {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .event-data {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Approval Buttons */
+        .approval-box {
+            margin-top: 16px;
+            padding: 18px;
+            background: var(--accent-light);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+        }
+
+        .approval-box p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .approval-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-approve {
+            flex: 1;
+            padding: 12px 18px;
+            background: var(--success);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-approve:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn-decline {
+            flex: 1;
+            padding: 12px 18px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-decline:hover:not(:disabled) {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .btn-approve:disabled, .btn-decline:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Location Modal */
-        .location-modal {
+        .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
 
-        .location-modal-content {
-            background: #111113;
-            border: 1px solid #27272a;
-            border-radius: 8px;
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 12px;
             padding: 32px;
-            max-width: 400px;
             width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
         }
 
-        .location-modal h2 {
-            font-size: 14px;
+        .modal h2 {
+            font-size: 20px;
             font-weight: 600;
             margin-bottom: 8px;
-            color: #fafafa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--text-primary);
         }
 
-        .location-modal p {
-            font-size: 12px;
-            color: #71717a;
-            margin-bottom: 20px;
+        .modal p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
             line-height: 1.6;
         }
 
-        .location-modal input {
+        .modal input {
             width: 100%;
-            padding: 14px 18px;
-            border: 1px solid #27272a;
-            border-radius: 4px;
-            background: #0a0a0b;
-            color: #fafafa;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
             margin-bottom: 16px;
         }
 
-        .location-modal input:focus {
+        .modal input:focus {
             outline: none;
-            border-color: #3f3f46;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
         }
 
-        .location-modal button {
+        .modal button {
             width: 100%;
             padding: 14px;
+            background: var(--accent);
             border: none;
-            border-radius: 4px;
-            background: #fafafa;
-            color: #0a0a0b;
-            font-family: 'JetBrains Mono', monospace;
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
             font-weight: 600;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            font-size: 15px;
             cursor: pointer;
+            transition: background 0.2s;
         }
 
-        .location-modal button:hover {
-            background: #e4e4e7;
+        .modal button:hover {
+            background: var(--accent-hover);
         }
 
-        /* Processing overlay */
-        .processing-overlay {
+        /* Processing Toast */
+        .processing-toast {
             position: fixed;
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 4px;
-            padding: 12px 20px;
             display: none;
             align-items: center;
             gap: 12px;
+            padding: 12px 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
             z-index: 100;
         }
 
-        .processing-overlay.active {
+        .processing-toast.active {
             display: flex;
         }
 
-        .processing-spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #27272a;
-            border-top-color: #fafafa;
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -566,151 +686,159 @@
             to { transform: rotate(360deg); }
         }
 
-        .processing-text {
-            font-size: 11px;
-            color: #71717a;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .processing-toast span {
+            font-size: 13px;
+            color: var(--text-secondary);
         }
 
         @media (max-width: 1024px) {
-            .container { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
         }
     </style>
 </head>
 <body>
     <!-- Location Modal -->
-    <div class="location-modal" id="locationModal">
-        <div class="location-modal-content">
+    <div class="modal-overlay" id="locationModal">
+        <div class="modal">
             <h2>Your Location</h2>
             <p>Enter your city to receive accurate travel recommendations with correct departure points.</p>
-            <input type="text" id="userLocation" placeholder="e.g., London, UK" onkeypress="if(event.key==='Enter')setLocation()">
+            <input type="text" id="userLocation" placeholder="e.g., London, United Kingdom" onkeypress="if(event.key==='Enter')setLocation()">
             <button onclick="setLocation()">Continue</button>
         </div>
     </div>
 
-    <!-- Processing Overlay -->
-    <div class="processing-overlay" id="processingOverlay">
-        <div class="processing-spinner"></div>
-        <span class="processing-text" id="processingText">Processing...</span>
+    <!-- Processing Toast -->
+    <div class="processing-toast" id="processingToast">
+        <div class="spinner"></div>
+        <span id="processingText">Processing...</span>
     </div>
 
-    <div class="container">
-        <!-- Chat Panel -->
-        <div class="chat-panel">
-            <div class="chat-header">
-                <h1>Highway Travel Services</h1>
-                <span class="badge">Enterprise Platform</span>
-            </div>
-            <div class="messages" id="messages">
-                <div class="message assistant">
-                    Welcome to Highway Travel Services.
-                    <br><br>
-                    This platform demonstrates enterprise-grade workflow orchestration:
-                    <br><br>
-                    • Parallel task execution<br>
-                    • Human-in-the-loop approval<br>
-                    • Conditional branching<br>
-                    • Durable state management
-                    <br><br>
-                    Enter your travel request to begin.
+    <div class="app-container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="header-left">
+                    <div class="logo">H</div>
+                    <div class="header-title">
+                        <h1>Highway Travel Services</h1>
+                        <span>Enterprise Workflow Demo</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="location-badge" id="locationBadge" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span id="locationDisplay">-</span>
+                    </div>
                 </div>
             </div>
-            <div class="input-area">
-                <input type="text" id="userInput" placeholder="Enter travel request..."
-                       onkeypress="if(event.key==='Enter')sendMessage()" disabled>
-                <button onclick="sendMessage()" disabled id="sendBtn">Send</button>
+
+            <div class="messages-container">
+                <div class="messages" id="messages">
+                    <div class="message assistant">
+                        <div class="message-avatar">H</div>
+                        <div class="message-content">
+                            <strong>Welcome to Highway Travel Services</strong><br><br>
+                            This platform demonstrates enterprise-grade workflow orchestration with parallel task execution, human-in-the-loop approval, and durable state management.<br><br>
+                            Enter your travel request to begin.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="Describe your travel plans..." onkeypress="if(event.key==='Enter')sendMessage()" disabled>
+                    <button onclick="sendMessage()" disabled id="sendBtn">Send</button>
+                </div>
             </div>
         </div>
 
-        <!-- Workflow Panel -->
-        <div class="workflow-panel">
-            <!-- Steps -->
-            <div class="card">
-                <div class="card-header">
-                    <span>Workflow Status</span>
-                    <div class="status-badge">
-                        <div class="status-dot idle" id="statusDot"></div>
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span class="sidebar-title">Workflow Status</span>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="statusDot"></div>
                         <span id="statusText">Ready</span>
                     </div>
                 </div>
                 <div class="steps-list" id="stepsList">
                     <div class="step" data-step="analyze_request">
-                        <div class="step-icon">1</div>
+                        <div class="step-number">1</div>
                         <div class="step-info">
                             <div class="step-name">Analyze Request</div>
                             <div class="step-desc">Parse travel requirements</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                     <div class="step" data-step="search_flights">
-                        <div class="step-icon">2</div>
+                        <div class="step-number">2</div>
                         <div class="step-info">
                             <div class="step-name">Search Flights</div>
                             <div class="step-desc">Query flight inventory</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                     <div class="step" data-step="search_hotels">
-                        <div class="step-icon">3</div>
+                        <div class="step-number">3</div>
                         <div class="step-info">
                             <div class="step-name">Search Hotels</div>
                             <div class="step-desc">Query accommodation</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                     <div class="step" data-step="compile_options">
-                        <div class="step-icon">4</div>
+                        <div class="step-number">4</div>
                         <div class="step-info">
                             <div class="step-name">Compile Package</div>
                             <div class="step-desc">Generate recommendation</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                     <div class="step" data-step="wait_approval">
-                        <div class="step-icon">5</div>
+                        <div class="step-number">5</div>
                         <div class="step-info">
                             <div class="step-name">Await Approval</div>
                             <div class="step-desc">Human authorization</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                     <div class="step" data-step="confirm_booking" id="stepConfirm">
-                        <div class="step-icon">6</div>
+                        <div class="step-number">6</div>
                         <div class="step-info">
                             <div class="step-name">Confirm Booking</div>
                             <div class="step-desc">Finalize reservation</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                     <div class="step" data-step="handle_rejection" id="stepReject" style="display:none;">
-                        <div class="step-icon">6</div>
+                        <div class="step-number">6</div>
                         <div class="step-info">
-                            <div class="step-name">Process Rejection</div>
+                            <div class="step-name">Process Decline</div>
                             <div class="step-desc">Handle declined request</div>
                         </div>
-                        <div class="step-time">—</div>
+                        <div class="step-time">-</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Actions -->
-            <div class="card">
-                <div class="card-header">Actions</div>
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span class="sidebar-title">Actions</span>
+                </div>
                 <div class="actions-grid">
-                    <button class="action-btn cancel" onclick="cancelWorkflow()" disabled id="btnCancel">Cancel</button>
+                    <button class="action-btn danger" onclick="cancelWorkflow()" disabled id="btnCancel">Cancel</button>
                     <button class="action-btn" onclick="refreshStatus()" disabled id="btnRefresh">Refresh</button>
                     <button class="action-btn" onclick="clearSession()">New Session</button>
                     <button class="action-btn" onclick="checkApprovals()" disabled id="btnApprovals">Approvals</button>
                 </div>
             </div>
 
-            <!-- Events -->
-            <div class="card" style="flex:1;">
-                <div class="card-header">
-                    <span>Event Log</span>
-                    <span id="eventCount" style="color:#3f3f46;">0</span>
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span class="sidebar-title">Event Log</span>
+                    <span id="eventCount" style="font-size:12px;color:var(--text-muted);">0</span>
                 </div>
                 <div class="events-list" id="eventsList"></div>
             </div>
@@ -729,12 +857,13 @@
 
         const STEP_ORDER = ['analyze_request', 'search_flights', 'search_hotels', 'compile_options', 'wait_approval', 'check_approval'];
 
-        // Check for saved location on load
         window.onload = function() {
             const saved = localStorage.getItem('userLocation');
             if (saved) {
                 userLocation = saved;
                 document.getElementById('locationModal').style.display = 'none';
+                document.getElementById('locationBadge').style.display = 'flex';
+                document.getElementById('locationDisplay').textContent = saved;
                 enableInput();
             }
         };
@@ -745,8 +874,10 @@
             userLocation = loc;
             localStorage.setItem('userLocation', loc);
             document.getElementById('locationModal').style.display = 'none';
+            document.getElementById('locationBadge').style.display = 'flex';
+            document.getElementById('locationDisplay').textContent = loc;
             enableInput();
-            addMessage(`Location set: ${loc}. You may now enter your travel request.`, 'system');
+            addMessage(`Location set to ${loc}. You may now enter your travel request.`, 'system');
         }
 
         function enableInput() {
@@ -757,18 +888,18 @@
 
         function showProcessing(text) {
             document.getElementById('processingText').textContent = text;
-            document.getElementById('processingOverlay').classList.add('active');
+            document.getElementById('processingToast').classList.add('active');
         }
 
         function hideProcessing() {
-            document.getElementById('processingOverlay').classList.remove('active');
+            document.getElementById('processingToast').classList.remove('active');
         }
 
         function showTyping() {
             const el = document.createElement('div');
-            el.className = 'typing-indicator';
+            el.className = 'message assistant typing-indicator';
             el.id = 'typingIndicator';
-            el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div><span class="typing-text">Processing</span>';
+            el.innerHTML = '<div class="message-avatar">H</div><div class="typing-dots"><span></span><span></span><span></span></div>';
             document.getElementById('messages').appendChild(el);
             el.scrollIntoView({ behavior: 'smooth' });
         }
@@ -782,11 +913,11 @@
             hideTyping();
             const el = document.createElement('div');
             el.className = `message ${type}`;
-            let html = text
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                .replace(/\n/g, '<br>');
-            el.innerHTML = html;
+
+            const avatar = type === 'user' ? 'U' : type === 'system' ? '!' : 'H';
+            let html = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
+
+            el.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-content">${html}</div>`;
             document.getElementById('messages').appendChild(el);
             el.scrollIntoView({ behavior: 'smooth' });
         }
@@ -798,7 +929,7 @@
             const list = document.getElementById('eventsList');
             list.insertBefore(el, list.firstChild);
             document.getElementById('eventCount').textContent = ++eventCount;
-            while (list.children.length > 30) list.removeChild(list.lastChild);
+            while (list.children.length > 20) list.removeChild(list.lastChild);
         }
 
         function setStatus(status, text) {
@@ -830,7 +961,6 @@
             const msg = input.value.trim();
             if (!msg) return;
 
-            // Prepend location context to the message
             const fullMessage = `[Departing from: ${userLocation}] ${msg}`;
 
             addMessage(msg, 'user');
@@ -847,7 +977,6 @@
                     body: JSON.stringify({ message: fullMessage })
                 });
                 const data = await resp.json();
-
                 hideProcessing();
 
                 if (data.error) {
@@ -861,9 +990,7 @@
                 }
 
                 if (data.type === 'waiting_approval') {
-                    if (data.options) {
-                        addMessage(data.options, 'assistant');
-                    }
+                    if (data.options) addMessage(data.options, 'assistant');
                     addMessage(data.message, 'system');
                     workflowId = data.workflow_run_id;
                     approvalKey = data.approval_key;
@@ -883,7 +1010,7 @@
                 document.querySelectorAll('.step').forEach(s => {
                     s.classList.remove('active', 'completed', 'waiting', 'skipped');
                     const timeEl = s.querySelector('.step-time');
-                    if (timeEl) timeEl.textContent = '—';
+                    if (timeEl) timeEl.textContent = '-';
                 });
                 document.getElementById('stepConfirm').style.display = '';
                 document.getElementById('stepReject').style.display = 'none';
@@ -919,15 +1046,9 @@
                 try {
                     const resp = await fetch(`/api/poll/${workflowId}`);
                     const contentType = resp.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        console.error('Poll returned non-JSON response:', resp.status);
-                        return;
-                    }
+                    if (!contentType || !contentType.includes('application/json')) return;
                     const data = await resp.json();
-                    if (data.error) {
-                        console.error('Poll error:', data.error);
-                        return;
-                    }
+                    if (data.error) return;
 
                     const status = data.status;
                     const step = data.current_step;
@@ -938,9 +1059,7 @@
                         if (stepMessages[stepName] && !displayedSteps.has(stepName)) {
                             displayedSteps.add(stepName);
                             addMessage(stepMessages[stepName], 'assistant');
-                            if (stepName === 'compile_options') {
-                                optionsDisplayed = true;
-                            }
+                            if (stepName === 'compile_options') optionsDisplayed = true;
                         }
                     }
 
@@ -953,11 +1072,7 @@
                         STEP_ORDER.forEach((s, i) => {
                             if (i < stepIdx) updateStep(s, 'completed');
                             else if (i === stepIdx) {
-                                if (s === 'wait_approval' && status === 'sleeping') {
-                                    updateStep(s, 'waiting');
-                                } else {
-                                    updateStep(s, 'active');
-                                }
+                                updateStep(s, s === 'wait_approval' && status === 'sleeping' ? 'waiting' : 'active');
                             }
                         });
 
@@ -978,6 +1093,10 @@
                     }
 
                     if (status === 'sleeping' && step === 'wait_approval' && !approvalShown && optionsDisplayed) {
+                        // Update approval_key from poll response (real key from API)
+                        if (data.approval_key) {
+                            approvalKey = data.approval_key;
+                        }
                         approvalShown = true;
                         hideProcessing();
                         setStatus('waiting', 'Awaiting Approval');
@@ -986,19 +1105,11 @@
 
                     if (status === 'completed') {
                         hideProcessing();
-                        if (wasRejected) {
-                            setStatus('rejected', 'Rejected');
-                            updateStep('handle_rejection', 'completed');
-                        } else {
-                            setStatus('completed', 'Completed');
-                            updateStep('confirm_booking', 'completed');
-                        }
-                        addEvent('complete', wasRejected ? 'Workflow completed (rejected)' : 'Workflow completed');
+                        setStatus(wasRejected ? 'failed' : 'completed', wasRejected ? 'Declined' : 'Completed');
+                        updateStep(wasRejected ? 'handle_rejection' : 'confirm_booking', 'completed');
+                        addEvent('complete', wasRejected ? 'Workflow completed (declined)' : 'Workflow completed');
                         stopPolling();
-
-                        if (data.final_message) {
-                            addMessage(data.final_message, 'assistant');
-                        }
+                        if (data.final_message) addMessage(data.final_message, 'assistant');
                         return;
                     }
 
@@ -1022,27 +1133,28 @@
         }
 
         function showInlineApproval() {
-            const approvalHtml = `
-                <div class="approval-inline">
-                    <p>Review the package above and authorize to proceed:</p>
-                    <div class="approval-inline-buttons">
-                        <button class="btn-approve-inline" onclick="handleApproval(true)">Approve</button>
-                        <button class="btn-reject-inline" onclick="handleApproval(false)">Decline</button>
+            const el = document.createElement('div');
+            el.className = 'message assistant';
+            el.innerHTML = `
+                <div class="message-avatar">H</div>
+                <div class="message-content">
+                    <strong>Authorization Required</strong>
+                    <div class="approval-box">
+                        <p>Review the travel package above. Proceed with booking?</p>
+                        <div class="approval-buttons">
+                            <button class="btn-approve" onclick="handleApproval(true)">Approve Booking</button>
+                            <button class="btn-decline" onclick="handleApproval(false)">Decline</button>
+                        </div>
                     </div>
                 </div>
             `;
-            const el = document.createElement('div');
-            el.className = 'message assistant';
-            el.innerHTML = approvalHtml;
             document.getElementById('messages').appendChild(el);
             el.scrollIntoView({ behavior: 'smooth' });
             addEvent('approval', 'Awaiting authorization...');
         }
 
         async function handleApproval(approved) {
-            document.querySelectorAll('.approval-inline-buttons button').forEach(btn => {
-                btn.disabled = true;
-            });
+            document.querySelectorAll('.approval-buttons button').forEach(btn => btn.disabled = true);
             wasRejected = !approved;
             showProcessing(approved ? 'Processing approval...' : 'Processing decline...');
 
@@ -1094,7 +1206,7 @@
             try {
                 const resp = await fetch(`/api/poll/${workflowId}`);
                 const data = await resp.json();
-                addEvent('refresh', `Status: ${data.status}, Step: ${data.current_step}`);
+                addEvent('refresh', `Status: ${data.status}`);
             } catch (e) {
                 addEvent('error', e.message);
             }
@@ -1125,14 +1237,14 @@
                 stepTimes = {};
                 eventCount = 0;
                 stopPolling();
-                setStatus('idle', 'Ready');
-                document.getElementById('messages').innerHTML = '<div class="message assistant">Session cleared. Ready for new request.</div>';
+                setStatus('', 'Ready');
+                document.getElementById('messages').innerHTML = '<div class="message assistant"><div class="message-avatar">H</div><div class="message-content">Session cleared. Ready for new request.</div></div>';
                 document.getElementById('eventsList').innerHTML = '';
                 document.getElementById('eventCount').textContent = '0';
                 document.querySelectorAll('.step').forEach(s => {
                     s.classList.remove('active', 'completed', 'waiting', 'skipped');
                     const timeEl = s.querySelector('.step-time');
-                    if (timeEl) timeEl.textContent = '—';
+                    if (timeEl) timeEl.textContent = '-';
                 });
                 document.getElementById('stepConfirm').style.display = '';
                 document.getElementById('stepReject').style.display = 'none';

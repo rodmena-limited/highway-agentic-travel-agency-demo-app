@@ -198,8 +198,11 @@ def get_workflow():
                         "prompt": "{{inputs.user_message}}",
                         "system_prompt": (
                             "You are a professional travel agency system. Extract from the request:\\n"
-                            "- Destination\\n- Travel dates (assume next month if not specified)\\n"
-                            "- Trip type\\n- Budget (assume mid-range if not specified)\\n\\n"
+                            "- Departure city (look for '[Departing from: X]' prefix)\\n"
+                            "- Destination\\n"
+                            "- Travel dates (assume next month if not specified)\\n"
+                            "- Trip type\\n"
+                            "- Budget (assume mid-range if not specified)\\n\\n"
                             "Make reasonable assumptions for missing details. "
                             "Be concise (under 80 words). No emojis. Formal tone."
                         ),
@@ -278,10 +281,14 @@ def get_workflow():
                         "storage_ids": RAG_STORAGE_IDS,
                         "query": (
                             "Based on the travel request, recommend the optimal travel package.\\n"
-                            "Analysis: {{analysis}}\\n"
-                            "Flights: {{flights}}\\n"
-                            "Hotels: {{hotels}}\\n\\n"
-                            "Present ONE recommendation with: flight details, hotel details, total price. "
+                            "Analysis: {{analysis}}\\n\\n"
+                            "IMPORTANT: Use REALISTIC flight times for the route (e.g., London-Paris is ~1h 15m, "
+                            "London-New York is ~7h 30m). Generate plausible airline names, departure times, and prices.\\n\\n"
+                            "Present ONE recommendation with:\\n"
+                            "- Outbound flight (airline, times, duration)\\n"
+                            "- Return flight (airline, times, duration)\\n"
+                            "- Hotel (name, rating, location)\\n"
+                            "- Total package price\\n\\n"
                             "Formal business tone. No emojis."
                         ),
                         "model": "qwen3-vl:235b-instruct-cloud",
@@ -292,11 +299,12 @@ def get_workflow():
                         "model": "qwen3-vl:235b-instruct-cloud",
                         "base_url": "https://ollama.com",
                         "prompt": (
-                            "Create 3 travel package options based on:\\n"
-                            "Analysis: {{analysis}}\\n"
-                            "Flights: {{flights}}\\n"
-                            "Hotels: {{hotels}}\\n\\n"
-                            "Format as numbered list with prices. Be enthusiastic but professional."
+                            "Create ONE optimal travel package based on:\\n"
+                            "Analysis: {{analysis}}\\n\\n"
+                            "IMPORTANT: Use REALISTIC flight times (e.g., London-Paris ~1h 15m, "
+                            "London-New York ~7h 30m). Generate plausible airlines and prices.\\n\\n"
+                            "Include: outbound flight, return flight, hotel, total price. "
+                            "Formal business tone. No emojis."
                         ),
                         "temperature": 0.7,
                     },
@@ -543,7 +551,7 @@ def chat():
     # Webhook URL allows workflow to push results directly to the app
     webhook_url = WEBHOOK_BASE_URL + "/api/webhook/step-result"
     # RAG knowledge base for travel recommendations
-    rag_storage_ids = "aed93cce-6995-4b67-8f76-129a1b4c02a9"
+    rag_storage_ids = os.getenv("RAG_STORAGE_ID", "")
     python_dsl = get_travel_workflow_dsl(session_id, webhook_url, rag_storage_ids)
 
     try:
@@ -679,12 +687,32 @@ def poll_events(workflow_run_id: str):
                 if output:
                     final_message = output.get("response") if isinstance(output, dict) else output
 
+        # Fetch real approval_key when waiting for approval
+        approval_key = None
+        if status == "sleeping" and current_step == "wait_approval":
+            try:
+                approval_resp = requests.get(
+                    HIGHWAY_API_URL + "/approvals",
+                    headers=get_headers(),
+                    params={"workflow_run_id": workflow_run_id},
+                    timeout=5,
+                )
+                if approval_resp.ok:
+                    approvals = approval_resp.json().get("data", {}).get("approvals", [])
+                    for a in approvals:
+                        if a.get("status") == "pending":
+                            approval_key = a.get("approval_key")
+                            break
+            except Exception as e:
+                app.logger.warning("Failed to fetch approval_key: %s", e)
+
         return jsonify({
             "status": status,
             "current_step": current_step,
             "result": result,
             "step_messages": step_messages,
             "final_message": final_message,
+            "approval_key": approval_key,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
