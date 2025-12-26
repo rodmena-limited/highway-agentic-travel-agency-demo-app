@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highway Travel Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0b;
+            min-height: 100vh;
+            color: #e4e4e7;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            background: #111113;
+            border-radius: 8px;
+            border: 1px solid #27272a;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #18181b;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .chat-header h1 {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #fafafa;
+        }
+
+        .badge {
+            background: #27272a;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #71717a;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 4px;
+            line-height: 1.7;
+            font-weight: 400;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            color: #fafafa;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: #18181b;
+            border: 1px solid #27272a;
+            color: #a1a1aa;
+        }
+
+        .message.system {
+            align-self: center;
+            background: #1c1917;
+            border: 1px solid #292524;
+            font-size: 12px;
+            text-align: center;
+            color: #a8a29e;
+        }
+
+        .message.error {
+            background: #1c1917;
+            border: 1px solid #7f1d1d;
+            color: #fca5a5;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            max-width: 200px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: #52525b;
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
+            30% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .typing-text {
+            font-size: 11px;
+            color: #71717a;
+            font-weight: 500;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: #18181b;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid #27272a;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            background: #0a0a0b;
+            color: #fafafa;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #3f3f46;
+        }
+
+        .input-area input::placeholder {
+            color: #52525b;
+        }
+
+        .input-area button {
+            padding: 14px 24px;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            background: #fafafa;
+            color: #0a0a0b;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .input-area button:hover:not(:disabled) {
+            background: #e4e4e7;
+        }
+
+        .input-area button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Workflow Panel */
+        .workflow-panel { display: flex; flex-direction: column; gap: 16px; }
+
+        .card {
+            background: #111113;
+            border-radius: 8px;
+            border: 1px solid #27272a;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #18181b;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #71717a;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.idle { background: #3f3f46; }
+        .status-dot.running { background: #eab308; animation: pulse 1.5s infinite; }
+        .status-dot.waiting { background: #a855f7; animation: pulse 2s infinite; }
+        .status-dot.completed { background: #22c55e; }
+        .status-dot.rejected { background: #f97316; }
+        .status-dot.failed { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Steps */
+        .steps-list { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 4px;
+            background: transparent;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .step.active {
+            background: #18181b;
+            border-color: #3f3f46;
+        }
+
+        .step.completed {
+            opacity: 0.6;
+        }
+
+        .step.waiting {
+            background: #1a1523;
+            border-color: #2e1065;
+        }
+
+        .step.skipped {
+            opacity: 0.3;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            background: #27272a;
+            color: #71717a;
+        }
+
+        .step.active .step-icon { background: #3f3f46; color: #fafafa; }
+        .step.completed .step-icon { background: #14532d; color: #22c55e; }
+        .step.waiting .step-icon { background: #2e1065; color: #a855f7; }
+
+        .step-info { flex: 1; }
+        .step-name { font-weight: 500; font-size: 12px; color: #a1a1aa; }
+        .step-desc { font-size: 10px; color: #52525b; margin-top: 2px; }
+        .step-time { font-size: 10px; color: #3f3f46; font-weight: 500; }
+
+        /* Spinner for active step */
+        .step.active .step-icon::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 2px solid transparent;
+            border-top-color: #fafafa;
+            border-radius: 4px;
+            animation: stepSpin 1s linear infinite;
+        }
+
+        @keyframes stepSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Events */
+        .events-list {
+            padding: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .event {
+            padding: 10px 12px;
+            background: #18181b;
+            border-radius: 4px;
+            font-size: 11px;
+            border-left: 2px solid #3f3f46;
+        }
+
+        .event.status { border-color: #a855f7; }
+        .event.error { border-color: #ef4444; background: #1c1917; }
+        .event.approval { border-color: #eab308; }
+        .event.complete { border-color: #22c55e; }
+
+        .event-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .event-type { font-weight: 600; color: #71717a; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
+        .event-time { color: #3f3f46; font-size: 10px; }
+        .event-data { color: #52525b; }
+
+        /* Actions */
+        .actions-grid {
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 10px;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #18181b;
+            color: #71717a;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            border-color: #3f3f46;
+            color: #a1a1aa;
+        }
+
+        .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .action-btn.cancel { color: #f87171; }
+        .action-btn.cancel:hover:not(:disabled) { border-color: #7f1d1d; }
+
+        /* Inline Approval */
+        .approval-inline {
+            margin-top: 16px;
+            padding: 20px;
+            background: #1a1523;
+            border-radius: 4px;
+            border: 1px solid #2e1065;
+        }
+
+        .approval-inline p {
+            margin-bottom: 16px;
+            font-weight: 500;
+            color: #a1a1aa;
+            font-size: 12px;
+        }
+
+        .approval-inline-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .approval-inline-buttons button {
+            padding: 12px 24px;
+            border: 1px solid;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .approval-inline-buttons button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-approve-inline {
+            background: #14532d;
+            border-color: #166534;
+            color: #22c55e;
+        }
+
+        .btn-approve-inline:hover:not(:disabled) {
+            background: #166534;
+        }
+
+        .btn-reject-inline {
+            background: #1c1917;
+            border-color: #292524;
+            color: #a8a29e;
+        }
+
+        .btn-reject-inline:hover:not(:disabled) {
+            border-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        /* Location Modal */
+        .location-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .location-modal-content {
+            background: #111113;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .location-modal h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fafafa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .location-modal p {
+            font-size: 12px;
+            color: #71717a;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .location-modal input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            background: #0a0a0b;
+            color: #fafafa;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .location-modal input:focus {
+            outline: none;
+            border-color: #3f3f46;
+        }
+
+        .location-modal button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 4px;
+            background: #fafafa;
+            color: #0a0a0b;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .location-modal button:hover {
+            background: #e4e4e7;
+        }
+
+        /* Processing overlay */
+        .processing-overlay {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            padding: 12px 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .processing-overlay.active {
+            display: flex;
+        }
+
+        .processing-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #27272a;
+            border-top-color: #fafafa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            font-size: 11px;
+            color: #71717a;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Location Modal -->
+    <div class="location-modal" id="locationModal">
+        <div class="location-modal-content">
+            <h2>Your Location</h2>
+            <p>Enter your city to receive accurate travel recommendations with correct departure points.</p>
+            <input type="text" id="userLocation" placeholder="e.g., London, UK" onkeypress="if(event.key==='Enter')setLocation()">
+            <button onclick="setLocation()">Continue</button>
+        </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="processing-spinner"></div>
+        <span class="processing-text" id="processingText">Processing...</span>
+    </div>
+
+    <div class="container">
+        <!-- Chat Panel -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <h1>Highway Travel Services</h1>
+                <span class="badge">Enterprise Platform</span>
+            </div>
+            <div class="messages" id="messages">
+                <div class="message assistant">
+                    Welcome to Highway Travel Services.
+                    <br><br>
+                    This platform demonstrates enterprise-grade workflow orchestration:
+                    <br><br>
+                    • Parallel task execution<br>
+                    • Human-in-the-loop approval<br>
+                    • Conditional branching<br>
+                    • Durable state management
+                    <br><br>
+                    Enter your travel request to begin.
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Enter travel request..."
+                       onkeypress="if(event.key==='Enter')sendMessage()" disabled>
+                <button onclick="sendMessage()" disabled id="sendBtn">Send</button>
+            </div>
+        </div>
+
+        <!-- Workflow Panel -->
+        <div class="workflow-panel">
+            <!-- Steps -->
+            <div class="card">
+                <div class="card-header">
+                    <span>Workflow Status</span>
+                    <div class="status-badge">
+                        <div class="status-dot idle" id="statusDot"></div>
+                        <span id="statusText">Ready</span>
+                    </div>
+                </div>
+                <div class="steps-list" id="stepsList">
+                    <div class="step" data-step="analyze_request">
+                        <div class="step-icon">1</div>
+                        <div class="step-info">
+                            <div class="step-name">Analyze Request</div>
+                            <div class="step-desc">Parse travel requirements</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                    <div class="step" data-step="search_flights">
+                        <div class="step-icon">2</div>
+                        <div class="step-info">
+                            <div class="step-name">Search Flights</div>
+                            <div class="step-desc">Query flight inventory</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                    <div class="step" data-step="search_hotels">
+                        <div class="step-icon">3</div>
+                        <div class="step-info">
+                            <div class="step-name">Search Hotels</div>
+                            <div class="step-desc">Query accommodation</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                    <div class="step" data-step="compile_options">
+                        <div class="step-icon">4</div>
+                        <div class="step-info">
+                            <div class="step-name">Compile Package</div>
+                            <div class="step-desc">Generate recommendation</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                    <div class="step" data-step="wait_approval">
+                        <div class="step-icon">5</div>
+                        <div class="step-info">
+                            <div class="step-name">Await Approval</div>
+                            <div class="step-desc">Human authorization</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                    <div class="step" data-step="confirm_booking" id="stepConfirm">
+                        <div class="step-icon">6</div>
+                        <div class="step-info">
+                            <div class="step-name">Confirm Booking</div>
+                            <div class="step-desc">Finalize reservation</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                    <div class="step" data-step="handle_rejection" id="stepReject" style="display:none;">
+                        <div class="step-icon">6</div>
+                        <div class="step-info">
+                            <div class="step-name">Process Rejection</div>
+                            <div class="step-desc">Handle declined request</div>
+                        </div>
+                        <div class="step-time">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">Actions</div>
+                <div class="actions-grid">
+                    <button class="action-btn cancel" onclick="cancelWorkflow()" disabled id="btnCancel">Cancel</button>
+                    <button class="action-btn" onclick="refreshStatus()" disabled id="btnRefresh">Refresh</button>
+                    <button class="action-btn" onclick="clearSession()">New Session</button>
+                    <button class="action-btn" onclick="checkApprovals()" disabled id="btnApprovals">Approvals</button>
+                </div>
+            </div>
+
+            <!-- Events -->
+            <div class="card" style="flex:1;">
+                <div class="card-header">
+                    <span>Event Log</span>
+                    <span id="eventCount" style="color:#3f3f46;">0</span>
+                </div>
+                <div class="events-list" id="eventsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let workflowId = null;
+        let approvalKey = null;
+        let pollInterval = null;
+        let stepTimes = {};
+        let eventCount = 0;
+        let approvalShown = false;
+        let wasRejected = false;
+        let userLocation = '';
+
+        const STEP_ORDER = ['analyze_request', 'search_flights', 'search_hotels', 'compile_options', 'wait_approval', 'check_approval'];
+
+        // Check for saved location on load
+        window.onload = function() {
+            const saved = localStorage.getItem('userLocation');
+            if (saved) {
+                userLocation = saved;
+                document.getElementById('locationModal').style.display = 'none';
+                enableInput();
+            }
+        };
+
+        function setLocation() {
+            const loc = document.getElementById('userLocation').value.trim();
+            if (!loc) return;
+            userLocation = loc;
+            localStorage.setItem('userLocation', loc);
+            document.getElementById('locationModal').style.display = 'none';
+            enableInput();
+            addMessage(`Location set: ${loc}. You may now enter your travel request.`, 'system');
+        }
+
+        function enableInput() {
+            document.getElementById('userInput').disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('userInput').focus();
+        }
+
+        function showProcessing(text) {
+            document.getElementById('processingText').textContent = text;
+            document.getElementById('processingOverlay').classList.add('active');
+        }
+
+        function hideProcessing() {
+            document.getElementById('processingOverlay').classList.remove('active');
+        }
+
+        function showTyping() {
+            const el = document.createElement('div');
+            el.className = 'typing-indicator';
+            el.id = 'typingIndicator';
+            el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div><span class="typing-text">Processing</span>';
+            document.getElementById('messages').appendChild(el);
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        function addMessage(text, type = 'assistant') {
+            hideTyping();
+            const el = document.createElement('div');
+            el.className = `message ${type}`;
+            let html = text
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            el.innerHTML = html;
+            document.getElementById('messages').appendChild(el);
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function addEvent(type, text) {
+            const el = document.createElement('div');
+            el.className = `event ${type}`;
+            el.innerHTML = `<div class="event-header"><span class="event-type">${type}</span><span class="event-time">${new Date().toLocaleTimeString()}</span></div><div class="event-data">${text}</div>`;
+            const list = document.getElementById('eventsList');
+            list.insertBefore(el, list.firstChild);
+            document.getElementById('eventCount').textContent = ++eventCount;
+            while (list.children.length > 30) list.removeChild(list.lastChild);
+        }
+
+        function setStatus(status, text) {
+            document.getElementById('statusDot').className = `status-dot ${status}`;
+            document.getElementById('statusText').textContent = text;
+        }
+
+        function updateStep(stepId, state) {
+            const el = document.querySelector(`[data-step="${stepId}"]`);
+            if (!el) return;
+            el.classList.remove('active', 'completed', 'waiting', 'skipped');
+            if (state) el.classList.add(state);
+
+            const timeEl = el.querySelector('.step-time');
+            if (!timeEl) return;
+
+            if (state === 'active' && !stepTimes[stepId]) {
+                stepTimes[stepId] = Date.now();
+                timeEl.textContent = '...';
+            } else if (state === 'completed' && stepTimes[stepId]) {
+                timeEl.textContent = ((Date.now() - stepTimes[stepId]) / 1000).toFixed(1) + 's';
+            } else if (state === 'waiting') {
+                timeEl.textContent = 'waiting';
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            // Prepend location context to the message
+            const fullMessage = `[Departing from: ${userLocation}] ${msg}`;
+
+            addMessage(msg, 'user');
+            input.value = '';
+            input.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            showTyping();
+            showProcessing('Submitting request...');
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: fullMessage })
+                });
+                const data = await resp.json();
+
+                hideProcessing();
+
+                if (data.error) {
+                    addMessage(data.error, 'error');
+                    return;
+                }
+
+                if (data.type === 'processing') {
+                    addMessage(data.message, 'system');
+                    return;
+                }
+
+                if (data.type === 'waiting_approval') {
+                    if (data.options) {
+                        addMessage(data.options, 'assistant');
+                    }
+                    addMessage(data.message, 'system');
+                    workflowId = data.workflow_run_id;
+                    approvalKey = data.approval_key;
+                    if (!approvalShown) {
+                        approvalShown = true;
+                        showInlineApproval();
+                    }
+                    return;
+                }
+
+                workflowId = data.workflow_run_id;
+                approvalKey = data.approval_key;
+                approvalShown = false;
+                wasRejected = false;
+                stepTimes = {};
+
+                document.querySelectorAll('.step').forEach(s => {
+                    s.classList.remove('active', 'completed', 'waiting', 'skipped');
+                    const timeEl = s.querySelector('.step-time');
+                    if (timeEl) timeEl.textContent = '—';
+                });
+                document.getElementById('stepConfirm').style.display = '';
+                document.getElementById('stepReject').style.display = 'none';
+
+                addMessage(data.message, 'assistant');
+                addEvent('start', `Workflow: ${workflowId.substring(0, 8)}...`);
+                setStatus('running', 'Running');
+
+                document.getElementById('btnCancel').disabled = false;
+                document.getElementById('btnRefresh').disabled = false;
+                document.getElementById('btnApprovals').disabled = false;
+
+                startPolling();
+            } catch (e) {
+                hideProcessing();
+                addMessage(`Error: ${e.message}`, 'error');
+            } finally {
+                input.disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+                input.focus();
+            }
+        }
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            let lastStep = null;
+            let displayedSteps = new Set();
+            let optionsDisplayed = false;
+
+            pollInterval = setInterval(async () => {
+                if (!workflowId) return;
+
+                try {
+                    const resp = await fetch(`/api/poll/${workflowId}`);
+                    const contentType = resp.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        console.error('Poll returned non-JSON response:', resp.status);
+                        return;
+                    }
+                    const data = await resp.json();
+                    if (data.error) {
+                        console.error('Poll error:', data.error);
+                        return;
+                    }
+
+                    const status = data.status;
+                    const step = data.current_step;
+                    const stepMessages = data.step_messages || {};
+
+                    const stepOrder = ['analyze_request', 'search_flights', 'search_hotels', 'compile_options'];
+                    for (const stepName of stepOrder) {
+                        if (stepMessages[stepName] && !displayedSteps.has(stepName)) {
+                            displayedSteps.add(stepName);
+                            addMessage(stepMessages[stepName], 'assistant');
+                            if (stepName === 'compile_options') {
+                                optionsDisplayed = true;
+                            }
+                        }
+                    }
+
+                    if (step && step !== lastStep) {
+                        lastStep = step;
+                        addEvent('step', step);
+                        showProcessing(`Executing: ${step.replace(/_/g, ' ')}`);
+
+                        const stepIdx = STEP_ORDER.indexOf(step);
+                        STEP_ORDER.forEach((s, i) => {
+                            if (i < stepIdx) updateStep(s, 'completed');
+                            else if (i === stepIdx) {
+                                if (s === 'wait_approval' && status === 'sleeping') {
+                                    updateStep(s, 'waiting');
+                                } else {
+                                    updateStep(s, 'active');
+                                }
+                            }
+                        });
+
+                        if (step === 'confirm_booking') {
+                            updateStep('wait_approval', 'completed');
+                            updateStep('check_approval', 'completed');
+                            document.getElementById('stepConfirm').style.display = '';
+                            document.getElementById('stepReject').style.display = 'none';
+                            updateStep('confirm_booking', 'active');
+                        } else if (step === 'handle_rejection') {
+                            wasRejected = true;
+                            updateStep('wait_approval', 'completed');
+                            updateStep('check_approval', 'completed');
+                            document.getElementById('stepConfirm').style.display = 'none';
+                            document.getElementById('stepReject').style.display = '';
+                            updateStep('handle_rejection', 'active');
+                        }
+                    }
+
+                    if (status === 'sleeping' && step === 'wait_approval' && !approvalShown && optionsDisplayed) {
+                        approvalShown = true;
+                        hideProcessing();
+                        setStatus('waiting', 'Awaiting Approval');
+                        showInlineApproval();
+                    }
+
+                    if (status === 'completed') {
+                        hideProcessing();
+                        if (wasRejected) {
+                            setStatus('rejected', 'Rejected');
+                            updateStep('handle_rejection', 'completed');
+                        } else {
+                            setStatus('completed', 'Completed');
+                            updateStep('confirm_booking', 'completed');
+                        }
+                        addEvent('complete', wasRejected ? 'Workflow completed (rejected)' : 'Workflow completed');
+                        stopPolling();
+
+                        if (data.final_message) {
+                            addMessage(data.final_message, 'assistant');
+                        }
+                        return;
+                    }
+
+                    if (status === 'failed') {
+                        hideProcessing();
+                        setStatus('failed', 'Failed');
+                        addEvent('error', 'Workflow failed');
+                        stopPolling();
+                    }
+                } catch (e) {
+                    console.error('Poll error:', e);
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = null;
+            document.getElementById('btnCancel').disabled = true;
+            hideProcessing();
+        }
+
+        function showInlineApproval() {
+            const approvalHtml = `
+                <div class="approval-inline">
+                    <p>Review the package above and authorize to proceed:</p>
+                    <div class="approval-inline-buttons">
+                        <button class="btn-approve-inline" onclick="handleApproval(true)">Approve</button>
+                        <button class="btn-reject-inline" onclick="handleApproval(false)">Decline</button>
+                    </div>
+                </div>
+            `;
+            const el = document.createElement('div');
+            el.className = 'message assistant';
+            el.innerHTML = approvalHtml;
+            document.getElementById('messages').appendChild(el);
+            el.scrollIntoView({ behavior: 'smooth' });
+            addEvent('approval', 'Awaiting authorization...');
+        }
+
+        async function handleApproval(approved) {
+            document.querySelectorAll('.approval-inline-buttons button').forEach(btn => {
+                btn.disabled = true;
+            });
+            wasRejected = !approved;
+            showProcessing(approved ? 'Processing approval...' : 'Processing decline...');
+
+            if (approved) {
+                document.getElementById('stepConfirm').style.display = '';
+                document.getElementById('stepReject').style.display = 'none';
+            } else {
+                document.getElementById('stepConfirm').style.display = 'none';
+                document.getElementById('stepReject').style.display = '';
+            }
+
+            try {
+                addEvent('approval', approved ? 'APPROVED' : 'DECLINED');
+                const resp = await fetch('/api/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approval_key: approvalKey, approved, comment: '' })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    addMessage(`Error: ${data.error}`, 'error');
+                    hideProcessing();
+                } else {
+                    updateStep('wait_approval', 'completed');
+                    setStatus('running', 'Processing');
+                }
+            } catch (e) {
+                addMessage(`Error: ${e.message}`, 'error');
+                hideProcessing();
+            }
+        }
+
+        async function cancelWorkflow() {
+            if (!workflowId || !confirm('Cancel workflow?')) return;
+            showProcessing('Cancelling...');
+            try {
+                await fetch(`/api/cancel/${workflowId}`, { method: 'POST' });
+                addEvent('cancel', 'Workflow cancelled');
+                setStatus('failed', 'Cancelled');
+                stopPolling();
+            } catch (e) {
+                addEvent('error', e.message);
+            }
+            hideProcessing();
+        }
+
+        async function refreshStatus() {
+            if (!workflowId) return;
+            try {
+                const resp = await fetch(`/api/poll/${workflowId}`);
+                const data = await resp.json();
+                addEvent('refresh', `Status: ${data.status}, Step: ${data.current_step}`);
+            } catch (e) {
+                addEvent('error', e.message);
+            }
+        }
+
+        async function checkApprovals() {
+            try {
+                const resp = await fetch('/api/approvals');
+                const data = await resp.json();
+                const list = data.data?.approvals || [];
+                addEvent('approval', `${list.length} pending`);
+                if (list.some(a => a.approval_key === approvalKey) && !approvalShown) {
+                    approvalShown = true;
+                    showInlineApproval();
+                }
+            } catch (e) {
+                addEvent('error', e.message);
+            }
+        }
+
+        async function clearSession() {
+            try {
+                await fetch('/api/session/clear', { method: 'POST' });
+                workflowId = null;
+                approvalKey = null;
+                approvalShown = false;
+                wasRejected = false;
+                stepTimes = {};
+                eventCount = 0;
+                stopPolling();
+                setStatus('idle', 'Ready');
+                document.getElementById('messages').innerHTML = '<div class="message assistant">Session cleared. Ready for new request.</div>';
+                document.getElementById('eventsList').innerHTML = '';
+                document.getElementById('eventCount').textContent = '0';
+                document.querySelectorAll('.step').forEach(s => {
+                    s.classList.remove('active', 'completed', 'waiting', 'skipped');
+                    const timeEl = s.querySelector('.step-time');
+                    if (timeEl) timeEl.textContent = '—';
+                });
+                document.getElementById('stepConfirm').style.display = '';
+                document.getElementById('stepReject').style.display = 'none';
+            } catch (e) {
+                addEvent('error', e.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Highway Agentic Bot Demo - Dependencies
+# Uses Highway public APIs + highway_dsl for workflow definition
+
+flask>=3.0.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+sseclient-py>=1.8.0
+highway-dsl>=2.1.0
