@@ -146,13 +146,12 @@ def _create_message_loop_body():
                         "base_url": "https://ollama.com",
                         "prompt": (
                             "You are a professional travel agency assistant. "
-                            "Original request: {{inputs.user_message}}\\n\\n"
-                            "Current status: Processing travel request. "
-                            "User message: {{update_payload.message}}\\n\\n"
+                            "Original request: {{user_message}}\\n\\n"
+                            "User follow-up: {{update_payload.message}}\\n\\n"
                             "Respond professionally and concisely (under 80 words). "
                             "No emojis. Formal business tone."
                         ),
-                        "temperature": 0.7,
+                        "temperature": 0.5,
                     },
                     "timeout_seconds": 300,
                 },
@@ -195,18 +194,16 @@ def get_workflow():
                         "provider": "ollama",
                         "model": "qwen3-vl:235b-instruct-cloud",
                         "base_url": "https://ollama.com",
-                        "prompt": "{{inputs.user_message}}",
+                        "prompt": "{{user_message}}",
                         "system_prompt": (
-                            "You are a professional travel agency system. Extract from the request:\\n"
-                            "- Departure city (look for '[Departing from: X]' prefix)\\n"
-                            "- Destination\\n"
-                            "- Travel dates (assume next month if not specified)\\n"
-                            "- Trip type\\n"
-                            "- Budget (assume mid-range if not specified)\\n\\n"
-                            "Make reasonable assumptions for missing details. "
-                            "Be concise (under 80 words). No emojis. Formal tone."
+                            "Parse travel request. Output ONLY 4 lines:\\n"
+                            "Departure: <city after 'Departing from:', or 'London' if empty/missing>\\n"
+                            "Destination: <where they want to go - look for city names>\\n"
+                            "Dates: <explicit dates, or 'today' if they say 'next flight/ASAP/soon', or 'next month' if unclear>\\n"
+                            "Budget: <budget mentioned or 'mid-range'>\\n\\n"
+                            "NEVER output anything else. Just the 4 lines."
                         ),
-                        "temperature": 0.7,
+                        "temperature": 0.1,
                     },
                     result_key="analysis",
                     timeout_policy=TimeoutPolicy(timeout=timedelta(seconds=60)),
@@ -280,33 +277,31 @@ def get_workflow():
                     kwargs={
                         "storage_ids": RAG_STORAGE_IDS,
                         "query": (
-                            "Based on the travel request, recommend the optimal travel package.\\n"
-                            "Analysis: {{analysis}}\\n\\n"
-                            "IMPORTANT: Use REALISTIC flight times for the route (e.g., London-Paris is ~1h 15m, "
-                            "London-New York is ~7h 30m). Generate plausible airline names, departure times, and prices.\\n\\n"
-                            "Present ONE recommendation with:\\n"
-                            "- Outbound flight (airline, times, duration)\\n"
-                            "- Return flight (airline, times, duration)\\n"
-                            "- Hotel (name, rating, location)\\n"
-                            "- Total package price\\n\\n"
-                            "Formal business tone. No emojis."
+                            "Use the Travel Agent Knowledge Base formatting rules to present ONE optimal package.\\n\\n"
+                            "USER REQUEST ANALYSIS:\\n"
+                            "{{analysis.response}}\\n\\n"
+                            "MANDATORY CONSTRAINTS:\\n"
+                            "1. Use the DEPARTURE and DESTINATION cities from the analysis above exactly.\\n"
+                            "2. Use REALISTIC flight durations for the actual route.\\n"
+                            "3. Follow the 'Standard Response Structure' from the knowledge base.\\n"
+                            "4. Do NOT use example cities from the knowledge base (Tokyo, Paris, etc) - "
+                            "use ONLY what's in the analysis.\\n\\n"
+                            "Generate the package now."
                         ),
                         "model": "qwen3-vl:235b-instruct-cloud",
                         "top_k": 5,
-                        "temperature": 0.7,
+                        "temperature": 0.3,
                     } if RAG_STORAGE_IDS else {
                         "provider": "ollama",
                         "model": "qwen3-vl:235b-instruct-cloud",
                         "base_url": "https://ollama.com",
                         "prompt": (
-                            "Create ONE optimal travel package based on:\\n"
-                            "Analysis: {{analysis}}\\n\\n"
-                            "IMPORTANT: Use REALISTIC flight times (e.g., London-Paris ~1h 15m, "
-                            "London-New York ~7h 30m). Generate plausible airlines and prices.\\n\\n"
-                            "Include: outbound flight, return flight, hotel, total price. "
-                            "Formal business tone. No emojis."
+                            "Create ONE travel package based on this analysis:\\n"
+                            "{{analysis.response}}\\n\\n"
+                            "Use REALISTIC flight times. Include: outbound flight, return flight, hotel, total price. "
+                            "Formal tone. No emojis."
                         ),
-                        "temperature": 0.7,
+                        "temperature": 0.3,
                     },
                     result_key="options",
                     timeout_policy=TimeoutPolicy(timeout=timedelta(seconds=90)),
@@ -334,7 +329,7 @@ def get_workflow():
                     args=["''' + session_id + '''", "Approve Travel Booking"],
                     kwargs={
                         "description": "Review the travel options and approve to proceed with booking.",
-                        "approval_data": {"session_id": "{{inputs.session_id}}", "message": "{{inputs.user_message}}"},
+                        "approval_data": {"session_id": "{{session_id}}", "message": "{{user_message}}"},
                         "timeout_seconds": 1800,
                     },
                     result_key="approval",
@@ -380,7 +375,7 @@ def get_workflow():
     # main_flow_result is the last task result from main_flow branch (wait_approval)
     builder.switch(
         "check_approval",
-        switch_on="{{main_flow_result.approval.status}}",
+        switch_on="{{main_flow_result.status}}",
         cases={
             "approved": "confirm_booking",
             "rejected": "handle_rejection",
@@ -398,12 +393,12 @@ def get_workflow():
             "model": "qwen3-vl:235b-instruct-cloud",
             "base_url": "https://ollama.com",
             "prompt": (
-                "Generate a formal booking confirmation for:\\n"
-                "Package: {{options}}\\n\\n"
+                "Generate a formal booking confirmation for this travel package:\\n"
+                "{{options.response}}\\n\\n"
                 "Include: confirmation number, booking summary, next steps. "
                 "Professional business tone. No emojis."
             ),
-            "temperature": 0.7,
+            "temperature": 0.5,
         },
         result_key="final_message",
         dependencies=["check_approval"],
@@ -438,16 +433,13 @@ def get_workflow():
             "model": "qwen3-vl:235b-instruct-cloud",
             "base_url": "https://ollama.com",
             "prompt": (
-                "The customer declined the travel package we offered.\\n"
-                "Their original request was: {{inputs.user_message}}\\n"
-                "The package we offered: {{options}}\\n\\n"
-                "Write a brief professional message:\\n"
-                "- Acknowledge they chose not to proceed with this package\\n"
-                "- Offer to search again with different criteria, budget, or dates\\n"
-                "- Keep it short and helpful\\n\\n"
+                "The customer declined this travel package:\\n"
+                "{{options.response}}\\n\\n"
+                "Write a brief professional message acknowledging their decision "
+                "and offering to search with different criteria. Keep it short. "
                 "Formal business tone. No emojis."
             ),
-            "temperature": 0.7,
+            "temperature": 0.5,
         },
         result_key="final_message",
         dependencies=["check_approval"],
@@ -501,6 +493,7 @@ def chat():
     """
     data = request.get_json()
     user_message = data.get("message", "").strip()
+    app.logger.info("Chat received message: %s", user_message)
 
     if not user_message:
         return jsonify({"error": "Message is required"}), 400
@@ -543,6 +536,9 @@ def chat():
                 })
 
             if wf_status in ("completed", "failed", "cancelled"):
+                # Clear cached results for completed workflow
+                if active_workflow_id in WORKFLOW_RESULTS_STORE:
+                    del WORKFLOW_RESULTS_STORE[active_workflow_id]
                 session.pop("active_workflow_id", None)
                 session.pop("original_request", None)
 
@@ -847,6 +843,11 @@ def list_approvals():
 @app.route("/api/session/clear", methods=["POST"])
 def clear_session():
     """Clear session and start fresh."""
+    # Clear cached workflow results for old workflow
+    old_workflow_id = session.get("active_workflow_id")
+    if old_workflow_id and old_workflow_id in WORKFLOW_RESULTS_STORE:
+        del WORKFLOW_RESULTS_STORE[old_workflow_id]
+
     session.clear()
     session["session_id"] = str(uuid.uuid4())
     return jsonify({"status": "cleared", "session_id": session["session_id"]})
