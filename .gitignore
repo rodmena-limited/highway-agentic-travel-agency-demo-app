@@ -29,6 +29,11 @@ var/
 *.manifest
 *.spec
 
+# non-code files
+CLAUDE.md
+GEMINI.md
+.issue.db
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -60,5 +65,3 @@ COMPLETE_S3_INTEGRATION.sh
 data/
 test_table*
 .env
-CLAUDE.md
-GEMINI.md
