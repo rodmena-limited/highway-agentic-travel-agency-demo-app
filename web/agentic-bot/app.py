@@ -24,6 +24,7 @@ import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, session
 
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -96,7 +97,9 @@ def send_update_to_workflow(workflow_run_id: str, user_message: str) -> dict | N
     return None
 
 
-def get_travel_workflow_dsl(session_id: str, webhook_url: str, rag_storage_ids: str = "") -> str:
+def get_travel_workflow_dsl(
+    session_id: str, webhook_url: str, rag_storage_ids: str = "", approval_key: str = ""
+) -> str:
     """Generate the Python DSL code for the travel agent workflow.
 
     This returns the DSL as a string that Highway will compile.
@@ -108,7 +111,8 @@ def get_travel_workflow_dsl(session_id: str, webhook_url: str, rag_storage_ids: 
         webhook_url: URL for webhook callbacks
         rag_storage_ids: Comma-separated file IDs for RAG knowledge base
     """
-    return '''"""Travel Agent Demo Workflow - Generated DSL.
+    return (
+        '''"""Travel Agent Demo Workflow - Generated DSL.
 
 Demonstrates:
 - Parallel branches (main_flow + message_handler)
@@ -124,10 +128,14 @@ from datetime import timedelta
 from highway_dsl import WorkflowBuilder, RetryPolicy, TimeoutPolicy
 
 # Webhook URL for pushing results to the Flask app
-WEBHOOK_URL = "''' + webhook_url + '''"
+WEBHOOK_URL = "'''
+        + webhook_url
+        + '''"
 
 # RAG knowledge base storage IDs (comma-separated)
-RAG_STORAGE_IDS = "''' + rag_storage_ids + '''"
+RAG_STORAGE_IDS = "'''
+        + rag_storage_ids
+        + '''"
 
 
 def _create_message_loop_body():
@@ -167,8 +175,23 @@ def _create_message_loop_body():
 
 
 def get_workflow():
-    """Build the travel agent workflow."""
-    builder = WorkflowBuilder(name="travel_agent_demo", version="4.0.0")
+    """Build the travel agent workflow.
+
+    Structure (v5.2.0 - simple, no early validation):
+    1. store_context - Initialize workflow
+    2. parallel_execution - Main flow (analyze + search + compile + approval) + message_handler
+    3. wait_for_main - Wait for main flow to complete
+    4. cancel_message_handler - Stop message handler
+    5. check_approval - Switch on approval status
+    6. confirm_booking/handle_rejection - Final response
+
+    Note: Early validation was removed due to multiple engine issues:
+    - Consecutive LLM calls have async context bugs
+    - in/not in operators are unsafe (default to True!)
+    - Condition operator has skip propagation bug
+    For non-travel requests, the LLM handles gracefully.
+    """
+    builder = WorkflowBuilder(name="travel_agent_demo", version="5.2.0")
     builder.set_description("AI Travel Agent with Parallel Message Handler and Webhook Callbacks")
 
     # Store original request as workflow variable
@@ -224,6 +247,7 @@ def get_workflow():
                         "allow_internal": True,
                         "timeout": 10,
                     },
+                    retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=3)),
                 )
                 .task(
                     "search_flights",
@@ -231,6 +255,7 @@ def get_workflow():
                     kwargs={"iterations": 3, "delay_seconds": 1.0},
                     result_key="flights",
                     timeout_policy=TimeoutPolicy(timeout=timedelta(minutes=2)),
+                    retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=10)),
                 )
                 # Webhook: push flights result
                 .task(
@@ -247,6 +272,7 @@ def get_workflow():
                         "allow_internal": True,
                         "timeout": 10,
                     },
+                    retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=3)),
                 )
                 .task(
                     "search_hotels",
@@ -254,6 +280,7 @@ def get_workflow():
                     kwargs={"iterations": 2, "delay_seconds": 1.0},
                     result_key="hotels",
                     timeout_policy=TimeoutPolicy(timeout=timedelta(minutes=2)),
+                    retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=10)),
                 )
                 # Webhook: push hotels result
                 .task(
@@ -270,6 +297,7 @@ def get_workflow():
                         "allow_internal": True,
                         "timeout": 10,
                     },
+                    retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=3)),
                 )
                 .task(
                     "compile_options",
@@ -322,11 +350,12 @@ def get_workflow():
                         "allow_internal": True,
                         "timeout": 10,
                     },
+                    retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=3)),
                 )
                 .task(
                     "wait_approval",
                     "tools.approval.request",
-                    args=["''' + session_id + '''", "Approve Travel Booking"],
+                    args=["{{approval_key}}", "Approve Travel Booking"],
                     kwargs={
                         "description": "Review the travel options and approve to proceed with booking.",
                         "approval_data": {"session_id": "{{session_id}}", "message": "{{user_message}}"},
@@ -361,6 +390,7 @@ def get_workflow():
         kwargs={"timeout_seconds": 2100},
         result_key="main_flow_result",
         dependencies=["parallel_execution"],
+        retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=10)),
     )
 
     # Cancel the message_handler branch
@@ -369,6 +399,7 @@ def get_workflow():
         "tools.workflow.cancel_branch",
         args=["{{parallel_result}}", "message_handler"],
         dependencies=["wait_for_main"],
+        retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=5)),
     )
 
     # Switch based on approval status
@@ -422,6 +453,7 @@ def get_workflow():
             "timeout": 10,
         },
         dependencies=["confirm_booking"],
+        retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=3)),
     )
 
     # Rejection handler (only if rejected)
@@ -463,15 +495,18 @@ def get_workflow():
             "timeout": 10,
         },
         dependencies=["handle_rejection"],
+        retry_policy=RetryPolicy(max_retries=2, delay=timedelta(seconds=3)),
     )
 
     return builder.build().model_dump(mode="json", exclude_none=True)
 '''
+    )
 
 
 # ============================================================================
 # ROUTES
 # ============================================================================
+
 
 @app.route("/")
 def index():
@@ -510,35 +545,54 @@ def chat():
             wf_status = status.get("status")
             current_step = status.get("current_step")
 
-            if wf_status in ("pending", "running", "sleeping"):
-                # Always try to send the message to the workflow's message handler
-                # This works whether we're processing or waiting for approval
+            # Check if this looks like a new trip request vs follow-up message
+            is_new_request = any(
+                keyword in user_message.lower()
+                for keyword in [
+                    "book",
+                    "trip",
+                    "travel",
+                    "flight",
+                    "hotel",
+                    "vacation",
+                    "paris",
+                    "london",
+                    "tokyo",
+                ]
+            )
+
+            if wf_status in ("pending", "running", "sleeping") and not is_new_request:
+                # Send follow-up messages to existing workflow's message handler
                 update_result = send_update_to_workflow(active_workflow_id, user_message)
 
                 if update_result and update_result.get("status") == "success":
-                    # tools.update.handle returns {response: {response: "text", model: ...}}
                     llm_result = update_result.get("response", {})
-                    llm_response = llm_result.get("response") if isinstance(llm_result, dict) else str(llm_result)
+                    llm_response = (
+                        llm_result.get("response")
+                        if isinstance(llm_result, dict)
+                        else str(llm_result)
+                    )
                     if not llm_response:
                         llm_response = "I'm working on your request..."
                 else:
-                    # Fallback if update fails (workflow might not have message handler ready)
                     llm_response = (
                         "I'm currently working on your travel request. "
-                        "I'm at the '%s' step. Please wait a moment..." % (current_step or "processing")
+                        "I'm at the '%s' step. Please wait a moment..."
+                        % (current_step or "processing")
                     )
 
-                return jsonify({
-                    "type": "processing",
-                    "workflow_run_id": active_workflow_id,
-                    "current_step": current_step,
-                    "message": llm_response,
-                })
+                return jsonify(
+                    {
+                        "type": "processing",
+                        "workflow_run_id": active_workflow_id,
+                        "current_step": current_step,
+                        "message": llm_response,
+                    }
+                )
 
-            if wf_status in ("completed", "failed", "cancelled"):
-                # Clear cached results for completed workflow
-                if active_workflow_id in WORKFLOW_RESULTS_STORE:
-                    del WORKFLOW_RESULTS_STORE[active_workflow_id]
+            # Clear old workflow if it's done OR if user wants a new trip
+            if wf_status in ("completed", "failed", "cancelled") or is_new_request:
+                WORKFLOW_RESULTS_STORE.pop(active_workflow_id, None)
                 session.pop("active_workflow_id", None)
                 session.pop("original_request", None)
 
@@ -548,7 +602,9 @@ def chat():
     webhook_url = WEBHOOK_BASE_URL + "/api/webhook/step-result"
     # RAG knowledge base for travel recommendations
     rag_storage_ids = os.getenv("RAG_STORAGE_ID", "")
-    python_dsl = get_travel_workflow_dsl(session_id, webhook_url, rag_storage_ids)
+    # Generate unique approval key per workflow (fixes stale approval reuse bug)
+    approval_key = str(uuid.uuid4())
+    python_dsl = get_travel_workflow_dsl(session_id, webhook_url, rag_storage_ids, approval_key)
 
     try:
         resp = requests.post(
@@ -560,6 +616,7 @@ def chat():
                     "user_message": user_message,
                     "session_id": session_id,
                     "original_request": user_message,
+                    "approval_key": approval_key,
                 },
             },
             timeout=30,
@@ -573,14 +630,17 @@ def chat():
 
         session["active_workflow_id"] = workflow_run_id
         session["original_request"] = user_message
+        session["approval_key"] = approval_key  # Track for this workflow
 
-        return jsonify({
-            "type": "workflow_started",
-            "workflow_run_id": workflow_run_id,
-            "session_id": session_id,
-            "message": "I'm on it! Starting to plan your trip...",
-            "approval_key": session_id,
-        })
+        return jsonify(
+            {
+                "type": "workflow_started",
+                "workflow_run_id": workflow_run_id,
+                "session_id": session_id,
+                "message": "I'm on it! Starting to plan your trip...",
+                "approval_key": approval_key,
+            }
+        )
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
@@ -641,7 +701,9 @@ def poll_events(workflow_run_id: str):
         if webhook_results.get("flights"):
             flights = webhook_results["flights"]
             if isinstance(flights, dict):
-                iterations = flights.get("iterations_completed", flights.get("total_iterations", "?"))
+                iterations = flights.get(
+                    "iterations_completed", flights.get("total_iterations", "?")
+                )
                 step_messages["search_flights"] = (
                     "✈️ **Flights Found**\n\nSearched %s flight options for your trip!" % iterations
                 )
@@ -702,15 +764,17 @@ def poll_events(workflow_run_id: str):
             except Exception as e:
                 app.logger.warning("Failed to fetch approval_key: %s", e)
 
-        return jsonify({
-            "status": status,
-            "current_step": current_step,
-            "result": result,
-            "step_messages": step_messages,
-            "final_message": final_message,
-            "approval_key": approval_key,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        return jsonify(
+            {
+                "status": status,
+                "current_step": current_step,
+                "result": result,
+                "step_messages": step_messages,
+                "final_message": final_message,
+                "approval_key": approval_key,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": "Highway API error: %s" % str(e)}), 500
@@ -734,7 +798,9 @@ def webhook_step_result():
     result = data.get("result")
 
     if not workflow_run_id or not step_name:
-        app.logger.warning("Webhook missing fields: workflow_run_id=%s, step_name=%s", workflow_run_id, step_name)
+        app.logger.warning(
+            "Webhook missing fields: workflow_run_id=%s, step_name=%s", workflow_run_id, step_name
+        )
         return jsonify({"error": "workflow_run_id and step_name required", "received": data}), 400
 
     # Store result
@@ -813,12 +879,14 @@ def approve_booking():
         resp.raise_for_status()
         result = resp.json()
 
-        return jsonify({
-            "status": "approved" if approved else "rejected",
-            "approval_key": approval_key,
-            "workflow_run_id": result.get("data", {}).get("workflow_run_id"),
-            "message": "Booking " + ("approved" if approved else "rejected"),
-        })
+        return jsonify(
+            {
+                "status": "approved" if approved else "rejected",
+                "approval_key": approval_key,
+                "workflow_run_id": result.get("data", {}).get("workflow_run_id"),
+                "message": "Booking " + ("approved" if approved else "rejected"),
+            }
+        )
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
